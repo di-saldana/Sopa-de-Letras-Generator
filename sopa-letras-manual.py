@@ -5,7 +5,7 @@ from fpdf import FPDF
 # Este script fue adaptado del original utilizado por chat gpt. 
 # Genera las sopas de letra manualmente, no con una libreria (WordSearch).
 
-def create_wordsearch(words, size=20):
+def create_wordsearch(words, size=32):
     grid = [['' for _ in range(size)] for _ in range(size)]
     directions = [(0, 1), (1, 0), (1, 1), (-1, 1)]
 
@@ -43,8 +43,10 @@ def create_wordsearch(words, size=20):
     return grid
 
 pdf = FPDF(orientation='P', unit='mm', format='Letter')
-pdf.set_auto_page_break(auto=True, margin=10)
+pdf.set_margins(20, 10, 10)  # left, top, right margins in mm
+pdf.set_auto_page_break(auto=True, margin=10)  # bottom margin in mm
 
+# NO DEJAR ESPACIOS ENTRE LAS PALABRAS
 categories = {
     "Familia": ["Cesar", "Julio", "Madelyn", "Filiberto", "Mikal", "Michelle", "Steven", "Danelyn", "Dianelys", "Daynaliz", "Oly"],
     "Bisnietos": ["Manuel", "Diego", "King", "Galilea", "Alessandra", "Nikolas", "Maia", "Spot"],
@@ -63,17 +65,32 @@ categories = {
 for title, words in categories.items():
     grid = create_wordsearch(words)
     pdf.add_page()
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, f"Sopa de Letras - {title}", ln=True)
-    pdf.set_font("Courier", size=10)
+    pdf.set_font("Arial", 'B', 20)
+    pdf.cell(0, 10, f"{title}", ln=True)
+    pdf.set_font("Courier", size=13)
+    pdf.ln(6)
     for row in grid:
         pdf.cell(0, 6, " ".join(row), ln=True)
 
     pdf.ln(4)
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 8, "Palabras a encontrar:", ln=True)
+    pdf.cell(0, 10, "Palabras a encontrar:", ln=True)
     pdf.set_font("Arial", size=10)
-    for word in words:
-        pdf.cell(0, 6, word, ln=True)
+    
+    # Calculate number of columns (at least 4 words per column)
+    words_per_column = 4
+    num_columns = max(1, (len(words) + words_per_column - 1) // words_per_column)
+    column_width = 180 / num_columns  # Page width is 210mm, minus 20mm left and 10mm right margins
+    start_y = pdf.get_y()
+    
+    # Distribute words across columns
+    words_per_col = (len(words) + num_columns - 1) // num_columns
+    for i, word in enumerate(words):
+        col = i // words_per_col
+        row_in_col = i % words_per_col
+        x = pdf.l_margin + col * column_width  # Use left margin (20mm) instead of hardcoded value
+        y = start_y + row_in_col * 6
+        pdf.set_xy(x, y)
+        pdf.cell(column_width, 6, word)
 
 pdf.output("Sopa_de_Letras_Abuela.pdf")
