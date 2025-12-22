@@ -63,7 +63,9 @@ categories = {
 }
 
 for title, words in categories.items():
-    grid = create_wordsearch(words)
+    # Remove spaces from words for grid placement, but keep original for display
+    words_for_grid = [word.replace(' ', '') for word in words]
+    grid = create_wordsearch(words_for_grid)
     pdf.add_page()
     pdf.set_font("Arial", 'B', 20)
     pdf.cell(0, 10, f"{title}", ln=True)
